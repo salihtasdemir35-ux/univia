@@ -1,0 +1,3 @@
+{ "appId": "app.univia.guide", "appName": "UNIVIA", "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "plugins": { "CapacitorHttp": { "enabled": true } } }

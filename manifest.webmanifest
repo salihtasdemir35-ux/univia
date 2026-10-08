@@ -1,0 +1,4 @@
+{ "name": "UNIVIA – Dünyayı Tanı. Bulunduğun Yeri Takip Et.", "short_name": "UNIVIA", "start_url": "./index.html#/home", "scope": "./", "display": "standalone",
+  "background_color": "#F2F5F8", "theme_color": "#1F4E8C", "lang": "tr", "description": "Dünya ve yerel bilgi rehberi: gez, keşfet, takip et.",
+  "icons": [ { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }, { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+             { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" }, { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" } ] }
