@@ -1,30 +1,77 @@
 name: UNIVIA APK
-on: { push: { branches: [ main ] }, workflow_dispatch: {} }
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with:
+          node-version: 20
+
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: 17 }
+        with:
+          distribution: temurin
+          java-version: 17
+
       - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
+
+      - name: www klasörünü hazırla (klasör yüklemek gerekmez)
+        run: |
+          mkdir -p www
+          if [ -f UNIVIA.html ]; then cp UNIVIA.html www/index.html; fi
+          if [ ! -f www/index.html ] && [ -f index.html ]; then cp index.html www/index.html; fi
+          for f in sw.js manifest.webmanifest; do if [ -f "$f" ]; then cp "$f" www/; fi; done
+          if [ -d icons ]; then cp -r icons www/; fi
+          test -f www/index.html || { echo "HATA: UNIVIA.html depoda bulunamadı"; exit 1; }
+
+      - name: Capacitor ayar dosyaları (yoksa oluştur)
+        run: |
+          if [ ! -f package.json ]; then
+          cat > package.json <<'JSON'
+          { "name": "univia", "version": "1.0.0", "private": true,
+            "dependencies": { "@capacitor/android": "^6.2.0", "@capacitor/core": "^6.2.0" },
+            "devDependencies": { "@capacitor/cli": "^6.2.0" } }
+          JSON
+          fi
+          if [ ! -f capacitor.config.json ]; then
+          cat > capacitor.config.json <<'JSON'
+          { "appId": "app.univia.guide", "appName": "UNIVIA", "webDir": "www",
+            "server": { "androidScheme": "https" },
+            "plugins": { "CapacitorHttp": { "enabled": true } } }
+          JSON
+          fi
+
       - name: Bağımlılıklar
         run: npm install
+
       - name: Android projesi
         run: |
           [ -d android ] || npx cap add android
           npx cap sync android
+
       - name: İzinler (konum, bildirim)
         run: |
           M=android/app/src/main/AndroidManifest.xml
           for P in ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION POST_NOTIFICATIONS; do
             grep -q "permission.$P" $M || sed -i "s#<application#<uses-permission android:name=\"android.permission.$P\" />\n    <application#" $M
           done
+
       - name: APK derle
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+
       - name: Yeniden adlandır
         run: cp android/app/build/outputs/apk/debug/app-debug.apk UNIVIA.apk
+
       - uses: actions/upload-artifact@v4
-        with: { name: UNIVIA-apk, path: UNIVIA.apk }
+        with:
+          name: UNIVIA-apk
+          path: UNIVIA.apk
