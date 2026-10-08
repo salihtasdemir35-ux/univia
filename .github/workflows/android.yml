@@ -1,0 +1,30 @@
+name: UNIVIA APK
+on: { push: { branches: [ main ] }, workflow_dispatch: {} }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: android-actions/setup-android@v3
+      - name: Bağımlılıklar
+        run: npm install
+      - name: Android projesi
+        run: |
+          [ -d android ] || npx cap add android
+          npx cap sync android
+      - name: İzinler (konum, bildirim)
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          for P in ACCESS_COARSE_LOCATION ACCESS_FINE_LOCATION POST_NOTIFICATIONS; do
+            grep -q "permission.$P" $M || sed -i "s#<application#<uses-permission android:name=\"android.permission.$P\" />\n    <application#" $M
+          done
+      - name: APK derle
+        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - name: Yeniden adlandır
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk UNIVIA.apk
+      - uses: actions/upload-artifact@v4
+        with: { name: UNIVIA-apk, path: UNIVIA.apk }
