@@ -26,11 +26,12 @@ jobs:
 
       - name: www klasörünü hazırla (klasör yüklemek gerekmez)
         run: |
-          mkdir -p www
+          mkdir -p www/icons
           if [ -f UNIVIA.html ]; then cp UNIVIA.html www/index.html; fi
           if [ ! -f www/index.html ] && [ -f index.html ]; then cp index.html www/index.html; fi
           for f in sw.js manifest.webmanifest; do if [ -f "$f" ]; then cp "$f" www/; fi; done
-          if [ -d icons ]; then cp -r icons www/; fi
+          for f in icon-192.png icon-512.png maskable-192.png maskable-512.png; do if [ -f "$f" ]; then cp "$f" www/icons/; fi; done
+          if [ -d icons ]; then cp -r icons/. www/icons/; fi
           test -f www/index.html || { echo "HATA: UNIVIA.html depoda bulunamadı"; exit 1; }
 
       - name: Capacitor ayar dosyaları (yoksa oluştur)
@@ -56,7 +57,16 @@ jobs:
       - name: Android projesi
         run: |
           [ -d android ] || npx cap add android
-          npx cap sync android
+
+      - name: Uygulama simgesi ve açılış ekranı
+        continue-on-error: true
+        run: |
+          mkdir -p assets
+          for f in icon-only.png icon-foreground.png icon-background.png splash.png splash-dark.png; do if [ -f "$f" ]; then cp "$f" assets/; fi; done
+          if [ -f assets/icon-only.png ]; then npx --yes @capacitor/assets@3 generate --android; else echo "Simge dosyası yok; varsayılan simge kullanılacak."; fi
+
+      - name: Web dosyalarını Android'e kopyala
+        run: npx cap sync android
 
       - name: İzinler (konum, bildirim)
         run: |
